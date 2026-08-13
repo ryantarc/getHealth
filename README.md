@@ -1,338 +1,46 @@
-# getHealth
+# GitHub Workflow When Making Changes
 
-A health and wellbeing mobile application developed using **Kotlin** and **Jetpack Compose**.
+Follow these steps **every time you want to make changes to the project**:
 
-## Project Modules
+1. **Create your own branch from `main`**
 
-The application consists of 3 main modules:
+   * A branch is basically a separate copy/version of the `main` code.
+   * This allows you to make changes without directly breaking `main`.
+   * Example: `feature-login` or `ryan-ui`
 
-- **Meal Planner** – AI-assisted meal planning and nutrition recommendations
-- **Mood Journal** – Create, view, edit and delete mood journal entries
-- **Fitness Advisor** – Fitness goals and exercise recommendations
+2. **Pull the latest code from `main`**
 
-Other parts of the application include:
+   * Before you start coding, make sure your branch has the latest changes from `main`.
+   * This helps prevent conflicts with code your teammates have already added.
+   * **Do this before starting your work.**
 
-- **Dashboard** – Main page connecting the modules
-- **Navigation** – Handles movement between screens
-- **UI Components** – Shared components used throughout the application
+3. **Make your code changes**
 
----
+   * Open the project in your IDE.
+   * Code normally and test your changes.
 
-# GitHub Guide
+4. **Commit your changes**
 
-We use GitHub to work on the project together.
+   * A commit is basically a **save point** for your changes on your local branch.
+   * Example: `Added login validation`
 
-> **Important: Do not directly push to `main`.**
+5. **Push your branch**
 
-Each member should work on their own branch and create a Pull Request when their work is ready.
+   * Push uploads your branch and its commits to GitHub.
+   * Your teammates can now see your changes.
 
-## Branch Structure
+6. **Create a Pull Request (PR) on GitHub**
 
-```text
-main
-├── feature/meal-planner
-├── feature/mood-journal
-├── feature/fitness-advisor
-└── feature/dashboard
-```
+   * A Pull Request is a request to **merge your branch into `main`**.
+   * Your teammates can review your code before merging it.
+   * Once approved, your changes can be merged into `main`.
 
----
+## Simple Flow
 
-# 1. Before Starting Work
+`main` → **create branch** → **pull latest changes** → **code** → **commit** → **push** → **Pull Request** → **merge into main**
 
-First, get the latest version of the project:
+### ⚠️ Important
 
-```bash
-git checkout main
-git pull origin main
-```
+**Do NOT directly code on `main`.**
 
-Create your own feature branch:
-
-```bash
-git checkout -b feature/your-feature
-```
-
-Example:
-
-```bash
-git checkout -b feature/meal-planner
-```
-
-If you already created the branch before, switch to it instead:
-
-```bash
-git checkout feature/meal-planner
-```
-
----
-
-# 2. Work on Your Feature
-
-Work normally in Android Studio.
-
-Try to work mainly inside your assigned module/package:
-
-```text
-mealplanner/
-mood/
-fitness/
-dashboard/
-```
-
-Avoid changing the same files as another team member unless necessary.
-
----
-
-# 3. Save Your Changes
-
-After completing a small part of your work, check your changes:
-
-```bash
-git status
-```
-
-Add your changes:
-
-```bash
-git add .
-```
-
-Commit your changes:
-
-```bash
-git commit -m "Add meal planner screen"
-```
-
-Use clear commit messages.
-
-### Good Examples
-
-```text
-Add meal planner screen
-Add mood journal CRUD
-Add fitness recommendation UI
-Fix navigation bug
-Add meal preference input
-```
-
-### Avoid
-
-```text
-update
-stuff
-changes
-test
-final
-```
-
----
-
-# 4. Push Your Branch
-
-Upload your branch to GitHub:
-
-```bash
-git push -u origin feature/your-feature
-```
-
-Example:
-
-```bash
-git push -u origin feature/meal-planner
-```
-
-After the first push, you can normally use:
-
-```bash
-git push
-```
-
----
-
-# 5. Create a Pull Request
-
-After pushing your branch:
-
-1. Go to the GitHub repository.
-2. Open your recently pushed branch.
-3. Click **Compare & pull request**.
-4. Make sure the destination is `main`.
-5. Create the Pull Request.
-6. Ask another team member to review your changes.
-7. If everything is okay, merge the Pull Request into `main`.
-
-```text
-Your branch
-     ↓
-  Push
-     ↓
-Pull Request
-     ↓
-Team Review
-     ↓
-  Merge
-     ↓
-   main
-```
-
----
-
-# 6. After Someone Merges Their Work
-
-Before starting new work, update your local `main`:
-
-```bash
-git checkout main
-git pull origin main
-```
-
-Then switch back to your feature branch:
-
-```bash
-git checkout feature/your-feature
-```
-
-If your branch needs the latest changes from `main`:
-
-```bash
-git merge main
-```
-
-If Git reports a merge conflict, ask the team for help before making changes.
-
----
-
-# Important Rules
-
-## Do Not Push Directly to `main`
-
-Do **not** do:
-
-```bash
-git checkout main
-git add .
-git commit -m "My changes"
-git push
-```
-
-Instead, always use your own feature branch.
-
-## Pull Before Starting Work
-
-Always get the latest version before starting:
-
-```bash
-git checkout main
-git pull origin main
-```
-
-## Test Before Creating a Pull Request
-
-Make sure the application:
-
-- Builds successfully
-- Runs on the emulator
-- Does not break another module
-- Does not contain obvious errors
-
-## Make Small Commits
-
-Do not wait until the entire module is finished before committing.
-
-For example:
-
-```text
-Add meal planner screen
-Add diet goal input
-Add meal preference selection
-Fix meal planner layout
-```
-
-## Be Careful With Shared Files
-
-Coordinate with the team before changing files that multiple people may use:
-
-```text
-MainActivity.kt
-AppNavigation.kt
-build.gradle.kts
-libs.versions.toml
-strings.xml
-Theme.kt
-```
-
-## Keep `main` Working
-
-The `main` branch should always contain a version of the application that the team can **build and run**.
-
----
-
-# Branch Naming
-
-Use:
-
-```text
-feature/feature-name
-```
-
-Examples:
-
-```text
-feature/meal-planner
-feature/mood-journal
-feature/fitness-advisor
-feature/dashboard
-feature/navigation
-```
-
-For bug fixes:
-
-```text
-fix/navigation-bug
-fix/mood-journal-crash
-```
-
----
-
-# Common Git Commands
-
-| Command | Purpose |
-|---|---|
-| `git checkout main` | Switch to the main branch |
-| `git pull origin main` | Download the latest main branch |
-| `git checkout -b feature/name` | Create a new feature branch |
-| `git checkout feature/name` | Switch to an existing branch |
-| `git status` | Check your changes |
-| `git add .` | Prepare changes for commit |
-| `git commit -m "message"` | Save changes locally |
-| `git push` | Upload your changes |
-| `git merge main` | Bring main's changes into your branch |
-
----
-
-# Simple Workflow
-
-```text
-Get latest main
-      ↓
-Create/switch to your branch
-      ↓
-Write code
-      ↓
-Test the application
-      ↓
-git add .
-      ↓
-git commit
-      ↓
-git push
-      ↓
-Create Pull Request
-      ↓
-Team member reviews
-      ↓
-Merge into main
-```
-
-> **Golden Rule: Work on your own branch → Commit → Push → Pull Request → Review → Merge into `main`.**
+Always work on your own branch first. This keeps `main` safe if your code has problems.
