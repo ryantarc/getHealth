@@ -1,5 +1,6 @@
 package com.example.gethealth.ui.screens.mealplanner
 
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import com.example.gethealth.ui.components.PlaceholderModuleScreen
 
@@ -17,4 +18,5 @@ fun MealPlannerScreen() {
         title = "Meal Planner",
         message = "This module will contain meal planning functionality."
     )
+    Text("Hello!")
 }
