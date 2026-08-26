@@ -32,6 +32,7 @@ object RootRoutes {
 object MainRoutes {
     const val DASHBOARD = "dashboard"
     const val MEAL_PLANNER = "mealPlanner"
+    const val SAVED_RECIPES = "savedRecipes"
     const val FITNESS = "fitness"
     const val WELLNESS = "wellness"
 }
