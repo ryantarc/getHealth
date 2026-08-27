@@ -1,13 +1,17 @@
 package com.example.gethealth.ui.screens.auth
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -42,85 +46,95 @@ fun RegisterScreen(
     var confirmPassword by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    Column(
+    // RESPONSIVE LAYOUT: same pattern as LoginScreen — capped/centered
+    // form width so it doesn't stretch full-width on a tablet.
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = "Create Account",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
-        )
+        Column(
+            modifier = Modifier
+                .widthIn(max = 420.dp)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "Create Account",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-        GetHealthTextField(
-            value = name,
-            onValueChange = { name = it; errorMessage = null },
-            label = "Name"
-        )
+            GetHealthTextField(
+                value = name,
+                onValueChange = { name = it; errorMessage = null },
+                label = "Name"
+            )
 
-        Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-        GetHealthTextField(
-            value = email,
-            onValueChange = { email = it; errorMessage = null },
-            label = "Email"
-        )
+            GetHealthTextField(
+                value = email,
+                onValueChange = { email = it; errorMessage = null },
+                label = "Email"
+            )
 
-        Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-        GetHealthTextField(
-            value = password,
-            onValueChange = { password = it; errorMessage = null },
-            label = "Password",
-            isPassword = true
-        )
+            GetHealthTextField(
+                value = password,
+                onValueChange = { password = it; errorMessage = null },
+                label = "Password",
+                isPassword = true
+            )
 
-        Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-        GetHealthTextField(
-            value = confirmPassword,
-            onValueChange = { confirmPassword = it; errorMessage = null },
-            label = "Confirm Password",
-            isPassword = true
-        )
+            GetHealthTextField(
+                value = confirmPassword,
+                onValueChange = { confirmPassword = it; errorMessage = null },
+                label = "Confirm Password",
+                isPassword = true
+            )
 
-        errorMessage?.let {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = it, color = MaterialTheme.colorScheme.error)
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        GetHealthButton(text = "Register") {
-            errorMessage = when {
-                name.isBlank() || email.isBlank() || password.isBlank() -> {
-                    "Please fill in all fields."
-                }
-                password != confirmPassword -> {
-                    "Passwords do not match."
-                }
-                else -> null
+            errorMessage?.let {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(text = it, color = MaterialTheme.colorScheme.error)
             }
 
-            if (errorMessage == null) {
-                // In the real app this would call UserRepository.register(...)
-                // and save the result somewhere. For now we just confirm and
-                // send the user back to Login.
-                UserRepository.register(name, email, password)
-                onRegisterSuccess()
+            Spacer(modifier = Modifier.height(24.dp))
+
+            GetHealthButton(text = "Register") {
+                errorMessage = when {
+                    name.isBlank() || email.isBlank() || password.isBlank() -> {
+                        "Please fill in all fields."
+                    }
+                    password != confirmPassword -> {
+                        "Passwords do not match."
+                    }
+                    else -> null
+                }
+
+                if (errorMessage == null) {
+                    // In the real app this would call UserRepository.register(...)
+                    // and save the result somewhere. For now we just confirm and
+                    // send the user back to Login.
+                    UserRepository.register(name, email, password)
+                    onRegisterSuccess()
+                }
             }
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        TextButton(onClick = onNavigateToLogin) {
-            Text("Already have an account? Login")
+            TextButton(onClick = onNavigateToLogin) {
+                Text("Already have an account? Login")
+            }
         }
     }
 }

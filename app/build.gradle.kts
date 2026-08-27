@@ -1,17 +1,17 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    kotlin("plugin.serialization") version "2.2.21"
+
 }
 
 android {
     namespace = "com.example.gethealth"
-    compileSdk {
-        version = release(37)
-    }
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.example.gethealth"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
@@ -21,9 +21,7 @@ android {
 
     buildTypes {
         release {
-            optimization {
-                enable = false
-            }
+            isMinifyEnabled = false
         }
     }
     compileOptions {
@@ -55,4 +53,16 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    implementation(platform("io.github.jan-tennert.supabase:bom:3.5.0"))
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
+
+    // HTTP engine required by supabase-kt
+    implementation("io.ktor:ktor-client-android:3.0.3")
+
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+
+    // Material icons used by the app (Edit / Delete)
+    implementation("androidx.compose.material:material-icons-extended")
+
 }

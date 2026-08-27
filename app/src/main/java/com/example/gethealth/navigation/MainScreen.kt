@@ -1,5 +1,7 @@
 package com.example.gethealth.navigation
 
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -18,24 +20,20 @@ import com.example.gethealth.ui.screens.fitness.FitnessScreen
 import com.example.gethealth.ui.screens.mealplanner.MealPlannerScreen
 import com.example.gethealth.ui.screens.mealplanner.SavedRecipesScreen
 import com.example.gethealth.ui.screens.wellness.WellnessScreen
+import com.example.gethealth.ui.util.WindowWidthSize
+import com.example.gethealth.ui.util.rememberWindowWidthSize
 
 /**
- * The "main app area" screen: Dashboard + Meal Planner + Fitness + Wellness,
- * always shown together with the bottom navigation bar.
+ * The "main app area" screen: Dashboard + Meal Planner + Fitness + Wellness.
  *
- * A small design decision worth explaining: the task description asks for a
- * single top-level NavHost, but the bottom nav bar must NOT appear on
- * Login/Register. The simplest way to achieve that with Navigation Compose
- * is to give the "main area" its own small NavHost (nested inside this
- * screen), while Login/Register/Main stay as three destinations of the
- * OUTER NavHost in AppNavigation.kt.
+ * Responsive navigation: on a COMPACT (phone-width) screen this shows the
+ * usual bottom navigation bar. On an EXPANDED (tablet-width) screen it
+ * switches to a NavigationRail down the left edge instead — matching the
+ * "Tablet Screen Design" slide in the deck. Both nav styles drive the same
+ * NavHost/routes, so no screen needs to know or care which one is showing.
  *
- * Saved-recipe state lives HERE (not inside MealPlannerScreen) because both
- * MealPlannerScreen (to show/toggle the bookmark icon) and
- * SavedRecipesScreen (to display the full saved list) need to see the same
- * data. Lifting it up to their shared parent is the simplest way to keep
- * them in sync without introducing a ViewModel yet. When Supabase is wired
- * in, this in-memory list will be replaced by real reads/writes.
+ * Saved-recipe state is hoisted here (see previous comment) so both
+ * MealPlannerScreen and SavedRecipesScreen share it.
  */
 @Composable
 fun MainScreen(
@@ -43,6 +41,7 @@ fun MainScreen(
     onLogout: () -> Unit
 ) {
     val innerNavController: NavHostController = rememberNavController()
+    val windowWidthSize = rememberWindowWidthSize()
 
     var savedRecipes by remember { mutableStateOf<List<Recipe>>(emptyList()) }
 
@@ -54,13 +53,11 @@ fun MainScreen(
         }
     }
 
-    Scaffold(
-        bottomBar = { BottomNavBar(navController = innerNavController) }
-    ) { innerPadding ->
+    val content: @Composable (Modifier) -> Unit = { modifier ->
         NavHost(
             navController = innerNavController,
             startDestination = MainRoutes.DASHBOARD,
-            modifier = Modifier.padding(innerPadding)
+            modifier = modifier
         ) {
             composable(MainRoutes.DASHBOARD) {
                 DashboardScreen(
@@ -87,6 +84,21 @@ fun MainScreen(
             }
             composable(MainRoutes.FITNESS) { FitnessScreen() }
             composable(MainRoutes.WELLNESS) { WellnessScreen() }
+        }
+    }
+
+    if (windowWidthSize == WindowWidthSize.EXPANDED) {
+        // Tablet layout: a NavigationRail beside the content, no bottom bar.
+        Row(modifier = Modifier.fillMaxSize()) {
+            AppNavRail(navController = innerNavController)
+            content(Modifier.weight(1f))
+        }
+    } else {
+        // Phone layout: the familiar bottom navigation bar.
+        Scaffold(
+            bottomBar = { BottomNavBar(navController = innerNavController) }
+        ) { innerPadding ->
+            content(Modifier.padding(innerPadding))
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.example.gethealth.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -39,6 +40,7 @@ fun PlaceholderModuleScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,

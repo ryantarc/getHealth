@@ -4,15 +4,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Search
@@ -30,7 +30,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -41,17 +40,13 @@ import com.example.gethealth.ui.components.RecipeCard
 
 /**
  * The AI Meal Planner screen — matches the "AI Meal Planner page" slide in
- * the design deck: an ingredients input box, a Generate button, and a list
- * of matching recipe results below it.
+ * the design deck.
  *
- * State is intentionally simple for now (remember/mutableStateOf). The
- * "Generate" button currently just loads a fixed fake recipe after a short
- * delay-free placeholder — this is exactly where MealPlanAiRepository will
- * be plugged in later.
- *
- * `savedRecipeIds` / `onToggleSave` / `onViewSavedRecipes` are passed down
- * from MainScreen, which owns the actual list of saved recipes so that
- * MealPlannerScreen and SavedRecipesScreen both see the same saved state.
+ * Responsive layout: the ingredients form and the generated recipe results
+ * all live inside one LazyVerticalGrid using GridCells.Adaptive. The form
+ * fields span the full grid width on every screen size (using
+ * GridItemSpan), while the recipe result cards reflow into multiple
+ * columns automatically on a wide (tablet) screen.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,28 +81,32 @@ fun MealPlannerScreen(
             )
         }
     ) { innerPadding ->
-        LazyColumn(
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 320.dp),
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding),
             contentPadding = PaddingValues(20.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item {
-                Text(
-                    text = "What's in your kitchen?",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "List your available ingredients and we'll find the best matching recipes for you.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Column {
+                    Text(
+                        text = "What's in your kitchen?",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "List your available ingredients and we'll find the best matching recipes for you.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 Column {
                     Text(
                         text = "Your Ingredients",
@@ -129,7 +128,7 @@ fun MealPlannerScreen(
                 }
             }
 
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 Button(
                     onClick = {
                         // Placeholder "generation" — this is where
@@ -146,7 +145,7 @@ fun MealPlannerScreen(
             }
 
             if (generatedRecipes.isNotEmpty()) {
-                item {
+                item(span = { GridItemSpan(maxLineSpan) }) {
                     Text(
                         text = "Found ${generatedRecipes.size} recipe matching your ingredients:",
                         style = MaterialTheme.typography.bodyMedium,
