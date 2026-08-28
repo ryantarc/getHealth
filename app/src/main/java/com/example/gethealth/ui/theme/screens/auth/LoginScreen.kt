@@ -1,11 +1,14 @@
 package com.example.gethealth.ui.screens.auth
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
@@ -21,6 +24,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import com.example.gethealth.data.UserRepository
 import com.example.gethealth.ui.components.GetHealthButton
 import com.example.gethealth.ui.components.GetHealthTextField
@@ -46,73 +51,91 @@ fun LoginScreen(
     onLoginSuccess: (userName: String) -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    Column(
+    // RESPONSIVE LAYOUT: the outer Box fills the whole screen and centers
+    // its content. The inner Column is capped at 420dp wide, so on a
+    // tablet the login form stays a comfortable, readable size in the
+    // middle of the screen instead of stretching edge to edge.
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = "getHealth",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
+        Column(
+            modifier = Modifier
+                .widthIn(max = 420.dp)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "getHealth",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "Your personal health companion",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        GetHealthTextField(
-            value = email,
-            onValueChange = { email = it; errorMessage = null },
-            label = "Email"
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        GetHealthTextField(
-            value = password,
-            onValueChange = { password = it; errorMessage = null },
-            label = "Password",
-            isPassword = true
-        )
-
-        errorMessage?.let {
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = it, color = MaterialTheme.colorScheme.error)
-        }
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = "Your personal health companion",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
-        // Temporary validation — this is where real authentication will
-        // eventually be plugged in (see UserRepository.login()).
-        GetHealthButton(text = "Login") {
-            if (UserRepository.login(email, password)) {
-                onLoginSuccess(email.substringBefore("@"))
-            } else {
-                errorMessage = "Please enter both email and password."
+            Spacer(modifier = Modifier.height(32.dp))
+
+            GetHealthTextField(
+                value = email,
+                onValueChange = { email = it; errorMessage = null },
+                label = "Email"
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            GetHealthTextField(
+                value = password,
+                onValueChange = { password = it; errorMessage = null },
+                label = "Password",
+                isPassword = true
+            )
+
+            errorMessage?.let {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(text = it, color = MaterialTheme.colorScheme.error)
             }
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-        Text(text = "Don't have an account?")
-        TextButton(onClick = onNavigateToRegister) {
-            Text("Register")
+            // Temporary validation — this is where real authentication will
+            // eventually be plugged in (see UserRepository.login()).
+            GetHealthButton(text = "Login") {
+                if (email.isBlank() || password.isBlank()) {
+                    errorMessage = "Please enter both email and password."
+                } else {
+                    scope.launch {
+                        if (UserRepository.login(email, password)) {
+                            onLoginSuccess(email.substringBefore("@"))
+                        } else {
+                            errorMessage = "Invalid email or password."
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(text = "Don't have an account?")
+            TextButton(onClick = onNavigateToRegister) {
+                Text("Register")
+            }
         }
     }
 }

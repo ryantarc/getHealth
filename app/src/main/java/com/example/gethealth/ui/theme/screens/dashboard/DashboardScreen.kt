@@ -4,12 +4,17 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FitnessCenter
@@ -37,10 +42,12 @@ import com.example.gethealth.ui.theme.BadgePurpleFg
 /**
  * The main Dashboard screen (the "Home" tab).
  *
- * Styled to match the GetHealth design deck: a greeting header, then one
- * card per module with a soft colored circular icon badge — green for Meal
- * Planner, purple for Wellness/Mood, peach for Fitness — mirroring the
- * "Screen Design" slides.
+ * Responsive layout: module cards sit in a LazyVerticalGrid using
+ * GridCells.Adaptive. On a narrow (phone) screen this naturally lays out
+ * as a single column, exactly like before. On a wide (tablet) screen it
+ * automatically reflows into two or three columns — no manual breakpoint
+ * logic needed, Compose recalculates the column count from the available
+ * width on every recomposition (e.g. on rotation).
  */
 @Composable
 fun DashboardScreen(
@@ -50,67 +57,79 @@ fun DashboardScreen(
     onNavigateToWellness: () -> Unit,
     onLogout: () -> Unit
 ) {
-    Column(
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = 260.dp),
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(20.dp),
+            .background(MaterialTheme.colorScheme.background),
+        contentPadding = PaddingValues(20.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Text(
-            text = "Good day,",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = userName.replaceFirstChar { it.uppercase() },
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+        // Header spans the full width regardless of how many columns
+        // the grid decided to use for the cards below it.
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            Column {
+                Text(
+                    text = "Good day,",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = userName.replaceFirstChar { it.uppercase() },
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.size(4.dp))
+                Text(
+                    text = "Three tools to support your health and well-being. Choose where to start.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
 
-        Spacer(modifier = Modifier.size(4.dp))
+        item {
+            ModuleCard(
+                title = "Meal Planner",
+                description = "Plan and view your meals",
+                icon = Icons.Filled.Restaurant,
+                badgeBg = BadgeGreenBg,
+                badgeFg = BadgeGreenFg,
+                onClick = onNavigateToMealPlanner
+            )
+        }
 
-        Text(
-            text = "Three tools to support your health and well-being. Choose where to start.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        item {
+            ModuleCard(
+                title = "Wellness",
+                description = "Track your mood and wellbeing",
+                icon = Icons.Filled.SelfImprovement,
+                badgeBg = BadgePurpleBg,
+                badgeFg = BadgePurpleFg,
+                onClick = onNavigateToWellness
+            )
+        }
 
-        ModuleCard(
-            title = "Meal Planner",
-            description = "Plan and view your meals",
-            icon = Icons.Filled.Restaurant,
-            badgeBg = BadgeGreenBg,
-            badgeFg = BadgeGreenFg,
-            onClick = onNavigateToMealPlanner
-        )
+        item {
+            ModuleCard(
+                title = "Fitness",
+                description = "Track your workouts",
+                icon = Icons.Filled.FitnessCenter,
+                badgeBg = BadgePeachBg,
+                badgeFg = BadgePeachFg,
+                onClick = onNavigateToFitness
+            )
+        }
 
-        ModuleCard(
-            title = "Wellness",
-            description = "Track your mood and wellbeing",
-            icon = Icons.Filled.SelfImprovement,
-            badgeBg = BadgePurpleBg,
-            badgeFg = BadgePurpleFg,
-            onClick = onNavigateToWellness
-        )
-
-        ModuleCard(
-            title = "Fitness",
-            description = "Track your workouts",
-            icon = Icons.Filled.FitnessCenter,
-            badgeBg = BadgePeachBg,
-            badgeFg = BadgePeachFg,
-            onClick = onNavigateToFitness
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        OutlinedButton(
-            onClick = onLogout,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Logout")
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            OutlinedButton(
+                onClick = onLogout,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Logout")
+            }
         }
     }
 }
