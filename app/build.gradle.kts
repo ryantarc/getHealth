@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -17,6 +19,10 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        val localProperties = Properties()
+        localProperties.load(rootProject.file("local.properties").inputStream())
+        buildConfigField("String", "SUPABASE_URL", "\"${localProperties["SUPABASE_URL"]}\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"${localProperties["SUPABASE_ANON_KEY"]}\"")
     }
 
     buildTypes {
@@ -30,6 +36,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig =true
     }
 }
 
@@ -55,6 +62,8 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(platform("io.github.jan-tennert.supabase:bom:3.5.0"))
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
+    implementation("io.github.jan-tennert.supabase:auth-kt")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
     // HTTP engine required by supabase-kt
     implementation("io.ktor:ktor-client-android:3.0.3")

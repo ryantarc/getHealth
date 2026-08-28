@@ -1,5 +1,7 @@
 package com.example.gethealth.model
 
+import kotlinx.serialization.Serializable
+
 /**
  * Simple data class representing a logged-in user.
  *
@@ -12,7 +14,10 @@ package com.example.gethealth.model
  *              added later, we mainly update this class and UserRepository,
  *              not every screen that uses it.
  */
+@Serializable
 data class User(
+    val id: Int? = null,
     val name: String,
-    val email: String
+    val email: String,
+    val password: String? = null
 )

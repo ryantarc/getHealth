@@ -24,6 +24,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import com.example.gethealth.data.UserRepository
 import com.example.gethealth.ui.components.GetHealthButton
 import com.example.gethealth.ui.components.GetHealthTextField
@@ -49,6 +51,7 @@ fun LoginScreen(
     onLoginSuccess: (userName: String) -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -114,10 +117,16 @@ fun LoginScreen(
             // Temporary validation — this is where real authentication will
             // eventually be plugged in (see UserRepository.login()).
             GetHealthButton(text = "Login") {
-                if (UserRepository.login(email, password)) {
-                    onLoginSuccess(email.substringBefore("@"))
-                } else {
+                if (email.isBlank() || password.isBlank()) {
                     errorMessage = "Please enter both email and password."
+                } else {
+                    scope.launch {
+                        if (UserRepository.login(email, password)) {
+                            onLoginSuccess(email.substringBefore("@"))
+                        } else {
+                            errorMessage = "Invalid email or password."
+                        }
+                    }
                 }
             }
 

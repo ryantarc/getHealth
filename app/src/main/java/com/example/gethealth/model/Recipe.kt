@@ -1,5 +1,7 @@
 package com.example.gethealth.model
 
+import kotlinx.serialization.Serializable
+
 /**
  * Represents one recipe suggestion, whether freshly AI-generated or
  * previously saved by the user.
@@ -9,6 +11,7 @@ package com.example.gethealth.model
  * Supabase (see MealPlanRepository), but every screen that displays a
  * recipe card only needs to know about this shape, not where it came from.
  */
+@Serializable
 data class Recipe(
     val id: String,
     val title: String,

@@ -24,6 +24,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import com.example.gethealth.data.UserRepository
 import com.example.gethealth.ui.components.GetHealthButton
 import com.example.gethealth.ui.components.GetHealthTextField
@@ -40,6 +42,7 @@ fun RegisterScreen(
     onRegisterSuccess: () -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -122,11 +125,14 @@ fun RegisterScreen(
                 }
 
                 if (errorMessage == null) {
-                    // In the real app this would call UserRepository.register(...)
-                    // and save the result somewhere. For now we just confirm and
-                    // send the user back to Login.
-                    UserRepository.register(name, email, password)
-                    onRegisterSuccess()
+                    scope.launch {
+                        try {
+                            UserRepository.register(name, email, password)
+                            onRegisterSuccess()
+                        } catch (e: Exception) {
+                            errorMessage = e.message ?: "Registration failed."
+                        }
+                    }
                 }
             }
 
