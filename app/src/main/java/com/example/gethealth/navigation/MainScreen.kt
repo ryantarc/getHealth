@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -53,37 +54,39 @@ fun MainScreen(
         }
     }
 
-    val content: @Composable (Modifier) -> Unit = { modifier ->
-        NavHost(
-            navController = innerNavController,
-            startDestination = MainRoutes.DASHBOARD,
-            modifier = modifier
-        ) {
-            composable(MainRoutes.DASHBOARD) {
-                DashboardScreen(
-                    userName = userName,
-                    onNavigateToMealPlanner = { innerNavController.navigate(MainRoutes.MEAL_PLANNER) },
-                    onNavigateToFitness = { innerNavController.navigate(MainRoutes.FITNESS) },
-                    onNavigateToWellness = { innerNavController.navigate(MainRoutes.WELLNESS) },
-                    onLogout = onLogout
-                )
+    val content = remember {
+        movableContentOf { modifier: Modifier ->
+            NavHost(
+                navController = innerNavController,
+                startDestination = MainRoutes.DASHBOARD,
+                modifier = modifier
+            ) {
+                composable(MainRoutes.DASHBOARD) {
+                    DashboardScreen(
+                        userName = userName,
+                        onNavigateToMealPlanner = { innerNavController.navigate(MainRoutes.MEAL_PLANNER) },
+                        onNavigateToFitness = { innerNavController.navigate(MainRoutes.FITNESS) },
+                        onNavigateToWellness = { innerNavController.navigate(MainRoutes.WELLNESS) },
+                        onLogout = onLogout
+                    )
+                }
+                composable(MainRoutes.MEAL_PLANNER) {
+                    MealPlannerScreen(
+                        savedRecipeIds = savedRecipes.map { it.id }.toSet(),
+                        onToggleSave = { recipe -> toggleSaveRecipe(recipe) },
+                        onViewSavedRecipes = { innerNavController.navigate(MainRoutes.SAVED_RECIPES) }
+                    )
+                }
+                composable(MainRoutes.SAVED_RECIPES) {
+                    SavedRecipesScreen(
+                        savedRecipes = savedRecipes,
+                        onToggleSave = { recipe -> toggleSaveRecipe(recipe) },
+                        onNavigateBack = { innerNavController.popBackStack() }
+                    )
+                }
+                composable(MainRoutes.FITNESS) { FitnessScreen() }
+                composable(MainRoutes.WELLNESS) { WellnessScreen() }
             }
-            composable(MainRoutes.MEAL_PLANNER) {
-                MealPlannerScreen(
-                    savedRecipeIds = savedRecipes.map { it.id }.toSet(),
-                    onToggleSave = { recipe -> toggleSaveRecipe(recipe) },
-                    onViewSavedRecipes = { innerNavController.navigate(MainRoutes.SAVED_RECIPES) }
-                )
-            }
-            composable(MainRoutes.SAVED_RECIPES) {
-                SavedRecipesScreen(
-                    savedRecipes = savedRecipes,
-                    onToggleSave = { recipe -> toggleSaveRecipe(recipe) },
-                    onNavigateBack = { innerNavController.popBackStack() }
-                )
-            }
-            composable(MainRoutes.FITNESS) { FitnessScreen() }
-            composable(MainRoutes.WELLNESS) { WellnessScreen() }
         }
     }
 
