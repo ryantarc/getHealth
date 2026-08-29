@@ -10,10 +10,12 @@ import io.github.jan.supabase.postgrest.query.Columns
  * This version uses the 'Users' table instead of Supabase Auth.
  */
 object UserRepository {
+    var currentUserEmail: String? = null
 
     /**
      * Logs a user in by checking the 'Users' table for matching credentials.
      */
+
     suspend fun login(email: String, password: String): Boolean {
         return try {
             val user = SupabaseClient.client.from("Users")
@@ -24,8 +26,13 @@ object UserRepository {
                     }
                 }
                 .decodeSingleOrNull<User>()
-            
-            user != null
+
+            if (user != null) {
+                currentUserEmail = email
+                true
+            } else {
+                false
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             false
