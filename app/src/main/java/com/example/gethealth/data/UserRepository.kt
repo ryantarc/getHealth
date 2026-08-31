@@ -10,13 +10,15 @@ import io.github.jan.supabase.postgrest.query.Columns
  * This version uses the 'Users' table instead of Supabase Auth.
  */
 object UserRepository {
+
+    /** The email of the currently logged-in user. Used by screens like WellnessScreen. */
     var currentUserEmail: String? = null
 
     /**
      * Logs a user in by checking the 'Users' table for matching credentials.
+     * Returns the User object if successful, or null if login fails.
      */
-
-    suspend fun login(email: String, password: String): Boolean {
+    suspend fun login(email: String, password: String): User? {
         return try {
             val user = SupabaseClient.client.from("Users")
                 .select(columns = Columns.ALL) {
@@ -26,16 +28,14 @@ object UserRepository {
                     }
                 }
                 .decodeSingleOrNull<User>()
-
+            
             if (user != null) {
-                currentUserEmail = email
-                true
-            } else {
-                false
+                currentUserEmail = user.email
             }
+            user
         } catch (e: Exception) {
             e.printStackTrace()
-            false
+            null
         }
     }
 
@@ -43,12 +43,20 @@ object UserRepository {
      * Registers a new user by inserting a row into the 'Users' table.
      */
     suspend fun register(name: String, email: String, password: String): User {
-        val newUser = User(name = name, email = email, password = password)
+        // We use a map to avoid sending a null 'id' to an auto-incrementing column
+        val data = mapOf(
+            "name" to name,
+            "email" to email,
+            "password" to password
+        )
         
-        return SupabaseClient.client.from("Users")
-            .insert(newUser) {
+        val registeredUser = SupabaseClient.client.from("Users")
+            .insert(data) {
                 select()
             }
             .decodeSingle<User>()
+            
+        currentUserEmail = registeredUser.email
+        return registeredUser
     }
 }

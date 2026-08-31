@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
+import com.example.gethealth.model.User
 import com.example.gethealth.data.UserRepository
 import com.example.gethealth.ui.components.GetHealthButton
 import com.example.gethealth.ui.components.GetHealthTextField
@@ -39,7 +40,7 @@ import com.example.gethealth.ui.components.GetHealthTextField
  */
 @Composable
 fun RegisterScreen(
-    onRegisterSuccess: () -> Unit,
+    onRegisterSuccess: (User) -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -127,8 +128,8 @@ fun RegisterScreen(
                 if (errorMessage == null) {
                     scope.launch {
                         try {
-                            UserRepository.register(name, email, password)
-                            onRegisterSuccess()
+                            val user = UserRepository.register(name, email, password)
+                            onRegisterSuccess(user)
                         } catch (e: Exception) {
                             errorMessage = e.message ?: "Registration failed."
                         }

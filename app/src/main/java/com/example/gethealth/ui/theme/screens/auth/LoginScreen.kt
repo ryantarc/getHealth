@@ -121,8 +121,9 @@ fun LoginScreen(
                     errorMessage = "Please enter both email and password."
                 } else {
                     scope.launch {
-                        if (UserRepository.login(email, password)) {
-                            onLoginSuccess(email.substringBefore("@"))
+                        val user = UserRepository.login(email, password)
+                        if (user != null) {
+                            onLoginSuccess(user.name)
                         } else {
                             errorMessage = "Invalid email or password."
                         }
