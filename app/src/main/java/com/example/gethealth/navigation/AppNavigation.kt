@@ -1,46 +1,56 @@
 package com.example.gethealth.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.gethealth.ui.screens.auth.LoginScreen
-import com.example.gethealth.ui.screens.auth.RegisterScreen
+import com.example.gethealth.data.SessionManager
+import com.example.gethealth.data.UserRepository
+import com.example.gethealth.ui.theme.screens.auth.LoginScreen
+import com.example.gethealth.ui.theme.screens.auth.RegisterScreen
 
 /**
  * The app's top-level (outer) navigation graph.
- *
- * What it is: A NavHost is the container that swaps one screen for another
- * as the user navigates. It needs a NavController (which remembers where
- * the user currently is and the "back stack" of previous screens) and a
- * `startDestination` (the first screen shown).
- *
- * The app has two areas:
- *   AUTH AREA:  Login, Register            (no bottom nav bar)
- *   MAIN AREA:  Dashboard/Meals/Fitness/Wellness (has a bottom nav bar,
- *               all handled together inside MainScreen.kt)
- *
- * This file only knows about 3 destinations: "login", "register" and
- * "main/{userName}". Everything inside the main area is handled by its own
- * nested NavHost in MainScreen.kt — see the comment there for why.
  */
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val context = LocalContext.current
+
+    // Restore the session data SYNCHRONOUSLY on startup
+    // This ensures that when MainScreen loads, the email is already available.
+    val savedName = remember { 
+        val name = SessionManager.getSavedUserName(context)
+        val email = SessionManager.getSavedUserEmail(context)
+        
+        // Restore the email to the singleton repository immediately
+        UserRepository.currentUserEmail.value = email
+        
+        name
+    }
+
+    val startDestination = if (savedName != null) {
+        RootRoutes.mainRoute(savedName)
+    } else {
+        RootRoutes.LOGIN
+    }
 
     NavHost(
         navController = navController,
-        startDestination = RootRoutes.LOGIN
+        startDestination = startDestination
     ) {
         composable(RootRoutes.LOGIN) {
             LoginScreen(
-                onLoginSuccess = { userName ->
-                    navController.navigate(RootRoutes.mainRoute(userName)) {
-                        // Remove Login from the back stack so the user
-                        // can't press "back" and return to it after
-                        // logging in.
+                onLoginSuccess = { user ->
+                    // Save session and update repository state
+                    SessionManager.saveSession(context, user.name, user.email)
+                    UserRepository.currentUserEmail.value = user.email
+                    
+                    navController.navigate(RootRoutes.mainRoute(user.name)) {
                         popUpTo(RootRoutes.LOGIN) { inclusive = true }
                     }
                 },
@@ -52,10 +62,14 @@ fun AppNavigation() {
 
         composable(RootRoutes.REGISTER) {
             RegisterScreen(
-                onRegisterSuccess = {
-                    // After registering, send the user back to Login so
-                    // they can sign in with their new (fake) account.
-                    navController.popBackStack()
+                onRegisterSuccess = { user ->
+                    // Auto-login and save session
+                    SessionManager.saveSession(context, user.name, user.email)
+                    UserRepository.currentUserEmail.value = user.email
+                    
+                    navController.navigate(RootRoutes.mainRoute(user.name)) {
+                        popUpTo(RootRoutes.LOGIN) { inclusive = true }
+                    }
                 },
                 onNavigateToLogin = {
                     navController.popBackStack()
@@ -63,9 +77,6 @@ fun AppNavigation() {
             )
         }
 
-        // The main area receives the logged-in user's name as a navigation
-        // argument. This demonstrates simple data-passing between screens:
-        // LoginScreen -> AppNavigation -> MainScreen -> DashboardScreen.
         composable(
             route = RootRoutes.MAIN_WITH_ARG,
             arguments = listOf(navArgument(RootRoutes.USER_NAME_ARG) { type = NavType.StringType })
@@ -75,9 +86,11 @@ fun AppNavigation() {
             MainScreen(
                 userName = userName,
                 onLogout = {
+                    // Clear session and reset repository state
+                    SessionManager.clearSession(context)
+                    UserRepository.currentUserEmail.value = null
+
                     navController.navigate(RootRoutes.LOGIN) {
-                        // Clear the whole back stack so logging out fully
-                        // resets the app back to a clean Login screen.
                         popUpTo(0) { inclusive = true }
                     }
                 }

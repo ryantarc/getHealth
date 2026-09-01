@@ -1,4 +1,4 @@
-package com.example.gethealth.ui.screens.mealplanner
+package com.example.gethealth.ui.theme.screens.mealplanner
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -22,9 +22,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,10 +33,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.rememberCoroutineScope
+import com.example.gethealth.data.MealPlanAiRepository
+import kotlinx.coroutines.launch
 import com.example.gethealth.model.Recipe
-import com.example.gethealth.model.fakeGeneratedRecipes
 import com.example.gethealth.ui.components.GetHealthTextField
 import com.example.gethealth.ui.components.RecipeCard
+import com.example.gethealth.ui.util.looksLikeValidInput
 
 /**
  * The AI Meal Planner screen — matches the "AI Meal Planner page" slide in
@@ -51,12 +55,16 @@ import com.example.gethealth.ui.components.RecipeCard
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MealPlannerScreen(
+    generatedRecipes: List<Recipe>,
+    onGeneratedRecipesChange: (List<Recipe>) -> Unit,
     savedRecipeIds: Set<String>,
     onToggleSave: (Recipe) -> Unit,
     onViewSavedRecipes: () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
     var ingredients by remember { mutableStateOf("") }
-    var generatedRecipes by remember { mutableStateOf<List<Recipe>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         topBar = {
@@ -67,10 +75,15 @@ fun MealPlannerScreen(
                         Icon(
                             imageVector = Icons.Filled.Bookmark,
                             contentDescription = null,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.onPrimary
                         )
-                        Spacer(modifier = Modifier.size(4.dp))
-                        Text("Saved ${savedRecipeIds.size}")
+                        Spacer(modifier = Modifier.size(6.dp))
+                        Text(
+                            text = "Saved",
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            style = MaterialTheme.typography.labelLarge
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -131,16 +144,53 @@ fun MealPlannerScreen(
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Button(
                     onClick = {
-                        // Placeholder "generation" — this is where
-                        // MealPlanAiRepository.generateMealPlan(ingredients)
-                        // will be called once the AI integration is wired up.
-                        generatedRecipes = if (ingredients.isNotBlank()) fakeGeneratedRecipes else emptyList()
+                        // LAYER 1: Cheap local pre-check to save API calls
+                        if (!looksLikeValidInput(ingredients)) {
+                            errorMessage = "Please enter some real ingredients first."
+                            return@Button
+                        }
+
+                        scope.launch {
+                            isLoading = true
+                            errorMessage = null
+                            val result = MealPlanAiRepository.generateMealPlan(ingredients)
+
+                            if (result.isSuccess) {
+                                onGeneratedRecipesChange(result.getOrNull() ?: emptyList())
+                            } else {
+                                // Extract the message from either a network error or the AI's semantic check
+                                errorMessage = result.exceptionOrNull()?.message ?: "Couldn't generate a recipe — check your connection"
+                            }
+
+                            isLoading = false
+                        }
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading
                 ) {
-                    Icon(imageVector = Icons.Filled.Search, contentDescription = null, modifier = Modifier.size(18.dp))
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(imageVector = Icons.Filled.Search, contentDescription = null, modifier = Modifier.size(18.dp))
+                    }
                     Spacer(modifier = Modifier.size(8.dp))
-                    Text("Generate Meal Plan")
+                    Text(if (isLoading) "Generating..." else "Generate Meal Plan")
+                }
+            }
+
+            // Display an error message if the AI generation fails
+            errorMessage?.let {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Text(
+                        text = it,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
                 }
             }
 

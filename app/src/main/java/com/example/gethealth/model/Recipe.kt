@@ -19,7 +19,8 @@ data class Recipe(
     val minutes: Int,
     val calories: Int,
     val proteinG: Int,
-    val tags: List<String>
+    val tags: List<String>,
+    val instructions: List<String> = emptyList()
 )
 
 /**
@@ -35,6 +36,12 @@ val fakeGeneratedRecipes = listOf(
         minutes = 25,
         calories = 380,
         proteinG = 35,
-        tags = listOf("High Protein", "Quick", "Low Carb")
+        tags = listOf("High Protein", "Quick", "Low Carb"),
+        instructions = listOf(
+            "Slice chicken breast into thin strips and toss with minced garlic.",
+            "Heat a wok or large skillet with a splash of oil and sear chicken until browned.",
+            "Add chopped broccoli, bell peppers, and snap peas, stir-frying for 3-4 minutes.",
+            "Pour in soy sauce and a touch of honey, tossing until well coated and hot."
+        )
     )
 )

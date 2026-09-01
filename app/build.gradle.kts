@@ -1,16 +1,10 @@
 import java.util.Properties
 
-val localProps = Properties().apply {
-    val file = rootProject.file("local.properties")
-    if (file.exists()) load(file.inputStream())
-}
-project.extra["SUPABASE_URL"] = localProps.getProperty("SUPABASE_URL", "")
-project.extra["SUPABASE_ANON_KEY"] = localProps.getProperty("SUPABASE_ANON_KEY", "")
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-    id("org.jetbrains.kotlin.plugin.serialization")
+    kotlin("plugin.serialization") version "2.2.21"
+
 }
 
 android {
@@ -29,6 +23,7 @@ android {
         localProperties.load(rootProject.file("local.properties").inputStream())
         buildConfigField("String", "SUPABASE_URL", "\"${localProperties["SUPABASE_URL"]}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${localProperties["SUPABASE_ANON_KEY"]}\"")
+        buildConfigField("String", "GROK_API_KEY", "\"${localProperties["GROK_API_KEY"]}\"")
     }
 
     buildTypes {
@@ -42,7 +37,7 @@ android {
     }
     buildFeatures {
         compose = true
-        buildConfig = true
+        buildConfig =true
     }
 }
 
@@ -66,12 +61,21 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
-
     implementation(platform("io.github.jan-tennert.supabase:bom:3.5.0"))
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
     implementation("io.github.jan-tennert.supabase:auth-kt")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
-    implementation("io.ktor:ktor-client-android:3.0.3")
+
+    // Ktor (Used for both Supabase and our direct Grok AI calls)
+    val ktor_version = "3.0.3"
+    implementation("io.ktor:ktor-client-android:$ktor_version")
+    implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
+
+    // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
+
+    // Material icons used by the app (Edit / Delete)
+    implementation("androidx.compose.material:material-icons-extended")
+
 }
