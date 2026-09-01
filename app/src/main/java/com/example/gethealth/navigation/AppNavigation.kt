@@ -81,7 +81,10 @@ fun AppNavigation() {
             route = RootRoutes.MAIN_WITH_ARG,
             arguments = listOf(navArgument(RootRoutes.USER_NAME_ARG) { type = NavType.StringType })
         ) { backStackEntry ->
-            val userName = backStackEntry.arguments?.getString(RootRoutes.USER_NAME_ARG) ?: "User"
+            // Try to get the name from navigation arguments, 
+            // but fallback to the SessionManager if it's missing (common on auto-login startup)
+            val argName = backStackEntry.arguments?.getString(RootRoutes.USER_NAME_ARG)
+            val userName = argName ?: SessionManager.getSavedUserName(context) ?: "User"
 
             MainScreen(
                 userName = userName,

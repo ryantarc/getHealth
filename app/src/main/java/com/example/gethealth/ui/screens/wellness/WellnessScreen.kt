@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import com.example.gethealth.data.UserRepository
 import com.example.gethealth.data.WellbeingRepository
 import com.example.gethealth.model.MoodEntry
+import com.example.gethealth.ui.components.GetHealthTopBar
 import com.example.gethealth.ui.util.WindowWidthSize
 import com.example.gethealth.ui.util.rememberWindowWidthSize
 import kotlinx.coroutines.launch
@@ -60,57 +61,47 @@ fun WellnessScreen() {
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-    ) {
-        if (!isLandscape) {
-            WellnessHeader()
-        }
-        
-        TabRow(selectedTabIndex = selectedTab) {
-            tabs.forEachIndexed { index, title ->
-                Tab(
-                    selected = selectedTab == index,
-                    onClick = { selectedTab = index },
-                    text = { Text(title) }
+    Scaffold(
+        topBar = { GetHealthTopBar(title = "Wellness Advisor") }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(innerPadding),
+        ) {
+            TabRow(selectedTabIndex = selectedTab) {
+                tabs.forEachIndexed { index, title ->
+                    Tab(
+                        selected = selectedTab == index,
+                        onClick = { selectedTab = index },
+                        text = { Text(title) }
+                    )
+                }
+            }
+
+            // Simple intro text at the top of content, similar to Fitness module
+            if (!isLandscape) {
+                Text(
+                    text = "Track your mood and explore your emotional health.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(16.dp)
                 )
             }
-        }
 
-        when (selectedTab) {
-            0 -> MoodSelectionScreen(
-                userEmail = userEmail,
-                selectedMood = selectedMood,
-                note = note,
-                selectedDate = selectedDate,
-                message = saveMessage
-            )
-            1 -> MoodHistoryScreen(userEmail)
-            2 -> MoodStatisticsScreen(userEmail)
+            when (selectedTab) {
+                0 -> MoodSelectionScreen(
+                    userEmail = userEmail,
+                    selectedMood = selectedMood,
+                    note = note,
+                    selectedDate = selectedDate,
+                    message = saveMessage
+                )
+                1 -> MoodHistoryScreen(userEmail)
+                2 -> MoodStatisticsScreen(userEmail)
+            }
         }
-    }
-}
-
-@Composable
-fun WellnessHeader() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "Wellness",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            text = "Track your mood and explore your emotional health.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
     }
 }
 
