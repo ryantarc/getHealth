@@ -1,5 +1,6 @@
 package com.example.gethealth.data
 
+import androidx.compose.runtime.mutableStateOf
 import com.example.gethealth.model.User
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
@@ -11,8 +12,12 @@ import io.github.jan.supabase.postgrest.query.Columns
  */
 object UserRepository {
 
-    /** The email of the currently logged-in user. Used by screens like WellnessScreen. */
-    var currentUserEmail: String? = null
+    /** 
+     * The email of the currently logged-in user. 
+     * We use mutableStateOf so that the UI (like MainScreen) automatically
+     * updates whenever this value is restored or changed.
+     */
+    var currentUserEmail = mutableStateOf<String?>(null)
 
     /**
      * Logs a user in by checking the 'Users' table for matching credentials.
@@ -30,7 +35,7 @@ object UserRepository {
                 .decodeSingleOrNull<User>()
             
             if (user != null) {
-                currentUserEmail = user.email
+                currentUserEmail.value = user.email
             }
             user
         } catch (e: Exception) {
@@ -56,7 +61,7 @@ object UserRepository {
             }
             .decodeSingle<User>()
             
-        currentUserEmail = registeredUser.email
+        currentUserEmail.value = registeredUser.email
         return registeredUser
     }
 }

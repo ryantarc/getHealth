@@ -47,7 +47,7 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 fun WellnessScreen() {
-    val userEmail = UserRepository.currentUserEmail ?: "guest@example.com"
+    val userEmail = UserRepository.currentUserEmail.value ?: "guest@example.com"
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     val tabs = listOf("Mood Tracker", "History", "Statistics")
 

@@ -18,7 +18,7 @@ import java.util.UUID
 
 /**
  * Repository responsible for generating healthy meal plans using Grok AI (xAI).
- * 
+ *
  * What it is: A singleton object that acts as the data source for AI features.
  * Why we need it: It handles the direct HTTP communication with Grok's API
  *                and parses the response into our Recipe models.
@@ -35,18 +35,21 @@ object MealPlanAiRepository {
         }
     }
 
-    private val json = Json { ignoreUnknownKeys = true }
+    private val json = Json { 
+        ignoreUnknownKeys = true
+        isLenient = true
+    }
 
     /**
      * Builds a prompt for Grok, sends it, and parses the resulting JSON into a Recipe list.
-     * 
+     *
      * @param ingredients A comma-separated list of ingredients the user has.
      * @return A Result containing a list of recipes (usually one) on success, or an error.
      */
     suspend fun generateMealPlan(ingredients: String): Result<List<Recipe>> {
         return try {
             val apiKey = BuildConfig.GROK_API_KEY.trim()
-            
+
             // AUTOMATIC FIX: If the key starts with 'gsk_', it's a GROQ key, not GROK.
             // We adjust the endpoint and model accordingly.
             val isGroq = apiKey.startsWith("gsk_")
@@ -55,14 +58,36 @@ object MealPlanAiRepository {
             } else {
                 "https://api.x.ai/v1/chat/completions"
             }
-            
-            val modelName = if (isGroq) "llama-3.1-70b-versatile" else "grok-beta"
 
-            // Strict instructions to ensure the AI returns ONLY valid JSON matching our model.
-            val systemInstruction = "You are a professional nutritionist and chef. " +
-                    "Generate ONE realistic healthy recipe based on the ingredients provided. " +
-                    "Respond ONLY with a raw JSON object. Do not include markdown code blocks. " +
-                    "JSON Fields: title (string), description (string), minutes (int), calories (int), proteinG (int), tags (list of strings)."
+            val modelName = "openai/gpt-oss-20b"
+
+            // Updated prompt with stricter requirements and instructions support
+            val systemInstruction = """
+                You are a nutrition assistant for a health app. A user has these ingredients available at home: "$ingredients".
+
+                Requirements:
+                - Use MOSTLY the listed ingredients. You may assume basic pantry staples (salt, pepper, oil, water) are available, but do not introduce other major ingredients not listed. // Ensures the user can actually make the recipe
+                - The recipe must be realistic and actually cookable by a home cook with no special equipment. // Accessibility for all users
+                - Keep it healthy: prioritize lean protein, vegetables, and balanced portions over fried or heavily processed preparations. // Core app value proposition
+                - Instructions must be concise: 4-6 short numbered steps, each one sentence. // Readability on mobile devices
+                - Calories and protein must be realistic estimates for a single serving, not placeholder round numbers. // Nutritional accuracy
+
+                First, check if the input contains real food ingredients. 
+                If the input has NO real ingredients (gibberish, random words, non-food items), respond with exactly this JSON and nothing else:
+                {"error": "No valid ingredients found. Please list real food items."}
+
+                Respond ONLY with valid JSON in exactly this format. 
+                CRITICAL: Use ONLY single quotes or escaped quotes (\") inside strings to avoid breaking the JSON structure.
+                {
+                  "title": "string",
+                  "description": "one sentence, under 20 words",
+                  "minutes": number,
+                  "calories": number,
+                  "proteinG": number,
+                  "tags": ["2 to 4 short tags like 'High Protein', 'Quick', 'Low Carb'"],
+                  "instructions": ["step 1", "step 2", "step 3"]
+                }
+            """.trimIndent()
 
             val requestBody = GrokRequest(
                 model = modelName,
@@ -70,7 +95,8 @@ object MealPlanAiRepository {
                     Message(role = "system", content = systemInstruction),
                     Message(role = "user", content = "Ingredients: $ingredients")
                 ),
-                temperature = 0.7
+                temperature = 0.6, // Balanced creativity and reliability
+                max_tokens = 800 // Ensure response isn't truncated mid-JSON
             )
 
             // Make the request and get the raw response first
@@ -88,29 +114,39 @@ object MealPlanAiRepository {
             }
 
             val response: GrokResponse = json.decodeFromString(responseBody)
-            var responseText = response.choices.firstOrNull()?.message?.content ?: ""
+            val rawResponse = response.choices.firstOrNull()?.message?.content ?: ""
             
-            // Cleanup markdown code blocks if the AI included them (e.g. ```json ... ```)
-            responseText = responseText.trim()
-                .removePrefix("```json")
-                .removePrefix("```")
-                .removeSuffix("```")
-                .trim()
+            // LAYER 3: Robust JSON Extraction
+            // Find the first '{' and last '}' to ignore any conversational filler the AI might add
+            val startIndex = rawResponse.indexOf('{')
+            val endIndex = rawResponse.lastIndexOf('}')
+            
+            if (startIndex == -1 || endIndex == -1 || endIndex < startIndex) {
+                throw Exception("AI output did not contain a valid JSON block")
+            }
+            
+            val cleanedResponse = rawResponse.substring(startIndex, endIndex + 1).trim()
 
-            if (responseText.isBlank()) throw Exception("AI returned empty text")
-            
+            if (cleanedResponse.isBlank()) throw Exception("AI returned empty JSON")
+
             // Parse the JSON string into our temporary AI response model
-            val aiRecipe = json.decodeFromString<AiRecipeResponse>(responseText)
+            val aiRecipe = json.decodeFromString<AiRecipeResponse>(cleanedResponse)
+            
+            // LAYER 2 VALIDATION: Check if the AI returned a semantic error
+            if (aiRecipe.error != null) {
+                return Result.failure(Exception(aiRecipe.error))
+            }
             
             // Convert to our app's official Recipe model and add a unique ID
             val recipe = Recipe(
                 id = UUID.randomUUID().toString(),
-                title = aiRecipe.title,
-                description = aiRecipe.description,
-                minutes = aiRecipe.minutes,
-                calories = aiRecipe.calories,
-                proteinG = aiRecipe.proteinG,
-                tags = aiRecipe.tags
+                title = aiRecipe.title ?: "Healthy Recipe",
+                description = aiRecipe.description ?: "",
+                minutes = aiRecipe.minutes ?: 20,
+                calories = aiRecipe.calories ?: 300,
+                proteinG = aiRecipe.proteinG ?: 20,
+                tags = aiRecipe.tags ?: emptyList(),
+                instructions = aiRecipe.instructions
             )
             
             Result.success(listOf(recipe))
@@ -128,7 +164,8 @@ object MealPlanAiRepository {
 private data class GrokRequest(
     val model: String,
     val messages: List<Message>,
-    val temperature: Double
+    val temperature: Double,
+    val max_tokens: Int? = null
 )
 
 @Serializable
@@ -149,13 +186,16 @@ private data class Choice(
 
 /**
  * A temporary internal data class used only for parsing the AI's specific JSON structure.
+ * Fields are optional to handle the error case safely.
  */
 @Serializable
 private data class AiRecipeResponse(
-    val title: String,
-    val description: String,
-    val minutes: Int,
-    val calories: Int,
-    val proteinG: Int,
-    val tags: List<String>
+    val title: String? = null,
+    val description: String? = null,
+    val minutes: Int? = null,
+    val calories: Int? = null,
+    val proteinG: Int? = null,
+    val tags: List<String>? = null,
+    val instructions: List<String> = emptyList(),
+    val error: String? = null
 )

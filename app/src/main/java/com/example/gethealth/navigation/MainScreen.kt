@@ -15,11 +15,16 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import com.example.gethealth.data.MealPlanRepository
+import com.example.gethealth.data.UserRepository
 import com.example.gethealth.model.Recipe
-import com.example.gethealth.ui.screens.dashboard.DashboardScreen
+import com.example.gethealth.ui.theme.screens.dashboard.DashboardScreen
 import com.example.gethealth.ui.screens.fitness.FitnessScreen
-import com.example.gethealth.ui.screens.mealplanner.MealPlannerScreen
-import com.example.gethealth.ui.screens.mealplanner.SavedRecipesScreen
+import com.example.gethealth.ui.theme.screens.mealplanner.MealPlannerScreen
+import com.example.gethealth.ui.theme.screens.mealplanner.SavedRecipesScreen
 import com.example.gethealth.ui.screens.wellness.WellnessScreen
 import com.example.gethealth.ui.util.WindowWidthSize
 import com.example.gethealth.ui.util.rememberWindowWidthSize
@@ -43,14 +48,34 @@ fun MainScreen(
 ) {
     val innerNavController: NavHostController = rememberNavController()
     val windowWidthSize = rememberWindowWidthSize()
+    val scope = rememberCoroutineScope()
+    val userEmail = UserRepository.currentUserEmail.value ?: ""
 
     var savedRecipes by remember { mutableStateOf<List<Recipe>>(emptyList()) }
+    var generatedRecipes by remember { mutableStateOf<List<Recipe>>(emptyList()) }
+
+    // Load saved recipes from Supabase when the main app area opens
+    LaunchedEffect(userEmail) {
+        if (userEmail.isNotEmpty()) {
+            savedRecipes = MealPlanRepository.getSavedRecipes(userEmail)
+        }
+    }
 
     fun toggleSaveRecipe(recipe: Recipe) {
-        savedRecipes = if (savedRecipes.any { it.id == recipe.id }) {
-            savedRecipes.filterNot { it.id == recipe.id }
-        } else {
-            savedRecipes + recipe
+        val isAlreadySaved = savedRecipes.any { it.id == recipe.id }
+        
+        scope.launch {
+            if (isAlreadySaved) {
+                // Remove from Supabase
+                MealPlanRepository.unsaveRecipe(userEmail, recipe.id)
+                // Update local UI state
+                savedRecipes = savedRecipes.filterNot { it.id == recipe.id }
+            } else {
+                // Save to Supabase
+                MealPlanRepository.saveRecipe(userEmail, recipe)
+                // Update local UI state
+                savedRecipes = savedRecipes + recipe
+            }
         }
     }
 
@@ -72,6 +97,8 @@ fun MainScreen(
                 }
                 composable(MainRoutes.MEAL_PLANNER) {
                     MealPlannerScreen(
+                        generatedRecipes = generatedRecipes,
+                        onGeneratedRecipesChange = { generatedRecipes = it },
                         savedRecipeIds = savedRecipes.map { it.id }.toSet(),
                         onToggleSave = { recipe -> toggleSaveRecipe(recipe) },
                         onViewSavedRecipes = { innerNavController.navigate(MainRoutes.SAVED_RECIPES) }

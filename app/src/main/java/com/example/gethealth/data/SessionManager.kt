@@ -12,6 +12,7 @@ import android.content.SharedPreferences
 object SessionManager {
     private const val PREF_NAME = "gethealth_prefs"
     private const val KEY_USER_NAME = "logged_in_user_name"
+    private const val KEY_USER_EMAIL = "logged_in_user_email"
     private const val KEY_IS_LOGGED_IN = "is_logged_in"
 
     private fun getPrefs(context: Context): SharedPreferences {
@@ -19,11 +20,12 @@ object SessionManager {
     }
 
     /**
-     * Saves the user's name and marks them as logged in.
+     * Saves the user's name, email and marks them as logged in.
      */
-    fun saveSession(context: Context, userName: String) {
+    fun saveSession(context: Context, userName: String, userEmail: String) {
         val editor = getPrefs(context).edit()
         editor.putString(KEY_USER_NAME, userName)
+        editor.putString(KEY_USER_EMAIL, userEmail)
         editor.putBoolean(KEY_IS_LOGGED_IN, true)
         editor.apply()
     }
@@ -33,6 +35,13 @@ object SessionManager {
      */
     fun getSavedUserName(context: Context): String? {
         return getPrefs(context).getString(KEY_USER_NAME, null)
+    }
+
+    /**
+     * Loads the saved user email. Returns null if no one is logged in.
+     */
+    fun getSavedUserEmail(context: Context): String? {
+        return getPrefs(context).getString(KEY_USER_EMAIL, null)
     }
 
     /**

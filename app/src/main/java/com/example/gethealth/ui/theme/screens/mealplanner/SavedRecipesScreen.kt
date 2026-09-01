@@ -1,4 +1,4 @@
-package com.example.gethealth.ui.screens.mealplanner
+package com.example.gethealth.ui.theme.screens.mealplanner
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -20,9 +20,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import com.example.gethealth.model.Recipe
 import com.example.gethealth.ui.components.RecipeCard
 
@@ -40,6 +46,32 @@ fun SavedRecipesScreen(
     onToggleSave: (Recipe) -> Unit,
     onNavigateBack: () -> Unit
 ) {
+    var recipeToDelete by remember { mutableStateOf<Recipe?>(null) }
+
+    // Confirmation dialog for deleting/unsaving a recipe
+    if (recipeToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { recipeToDelete = null },
+            title = { Text("Unsave Recipe?") },
+            text = { Text("Are you sure you want to remove '${recipeToDelete?.title}' from your saved recipes?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        recipeToDelete?.let { onToggleSave(it) }
+                        recipeToDelete = null
+                    }
+                ) {
+                    Text("Remove", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { recipeToDelete = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -89,7 +121,7 @@ fun SavedRecipesScreen(
                     RecipeCard(
                         recipe = recipe,
                         isSaved = true,
-                        onToggleSave = { onToggleSave(recipe) }
+                        onToggleSave = { recipeToDelete = recipe }
                     )
                 }
             }

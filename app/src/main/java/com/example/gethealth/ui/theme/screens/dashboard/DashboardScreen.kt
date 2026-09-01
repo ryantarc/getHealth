@@ -1,4 +1,4 @@
-package com.example.gethealth.ui.screens.dashboard
+package com.example.gethealth.ui.theme.screens.dashboard
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -71,7 +71,7 @@ fun DashboardScreen(
         item(span = { GridItemSpan(maxLineSpan) }) {
             Column {
                 Text(
-                    text = "Good day,",
+                    text = "Welcome,",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

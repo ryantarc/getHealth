@@ -1,4 +1,4 @@
-package com.example.gethealth.ui.screens.auth
+package com.example.gethealth.ui.theme.screens.auth
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,7 +41,7 @@ import com.example.gethealth.ui.components.GetHealthTextField
 @Composable
 fun RegisterScreen(
     onRegisterSuccess: (User) -> Unit,
-    onNavigateToLogin: () -> Unit
+    onNavigateToLogin: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     var name by remember { mutableStateOf("") }

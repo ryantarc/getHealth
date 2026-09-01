@@ -9,23 +9,32 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.gethealth.data.SessionManager
-import com.example.gethealth.ui.screens.auth.LoginScreen
-import com.example.gethealth.ui.screens.auth.RegisterScreen
+import com.example.gethealth.data.UserRepository
+import com.example.gethealth.ui.theme.screens.auth.LoginScreen
+import com.example.gethealth.ui.theme.screens.auth.RegisterScreen
 
 /**
  * The app's top-level (outer) navigation graph.
- *
-// ... (omitting comments)
  */
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
     val context = LocalContext.current
 
-    // Check if there is a saved session on startup
-    val savedUserName = remember { SessionManager.getSavedUserName(context) }
-    val startDestination = if (savedUserName != null) {
-        RootRoutes.mainRoute(savedUserName)
+    // Restore the session data SYNCHRONOUSLY on startup
+    // This ensures that when MainScreen loads, the email is already available.
+    val savedName = remember { 
+        val name = SessionManager.getSavedUserName(context)
+        val email = SessionManager.getSavedUserEmail(context)
+        
+        // Restore the email to the singleton repository immediately
+        UserRepository.currentUserEmail.value = email
+        
+        name
+    }
+
+    val startDestination = if (savedName != null) {
+        RootRoutes.mainRoute(savedName)
     } else {
         RootRoutes.LOGIN
     }
@@ -34,14 +43,14 @@ fun AppNavigation() {
         navController = navController,
         startDestination = startDestination
     ) {
-// ...
         composable(RootRoutes.LOGIN) {
             LoginScreen(
-                onLoginSuccess = { userName ->
-                    // Save session when login succeeds
-                    SessionManager.saveSession(context, userName)
+                onLoginSuccess = { user ->
+                    // Save session and update repository state
+                    SessionManager.saveSession(context, user.name, user.email)
+                    UserRepository.currentUserEmail.value = user.email
                     
-                    navController.navigate(RootRoutes.mainRoute(userName)) {
+                    navController.navigate(RootRoutes.mainRoute(user.name)) {
                         popUpTo(RootRoutes.LOGIN) { inclusive = true }
                     }
                 },
@@ -54,8 +63,9 @@ fun AppNavigation() {
         composable(RootRoutes.REGISTER) {
             RegisterScreen(
                 onRegisterSuccess = { user ->
-                    // Auto-login and save session after successful registration
-                    SessionManager.saveSession(context, user.name)
+                    // Auto-login and save session
+                    SessionManager.saveSession(context, user.name, user.email)
+                    UserRepository.currentUserEmail.value = user.email
                     
                     navController.navigate(RootRoutes.mainRoute(user.name)) {
                         popUpTo(RootRoutes.LOGIN) { inclusive = true }
@@ -67,7 +77,6 @@ fun AppNavigation() {
             )
         }
 
-        // ...
         composable(
             route = RootRoutes.MAIN_WITH_ARG,
             arguments = listOf(navArgument(RootRoutes.USER_NAME_ARG) { type = NavType.StringType })
@@ -77,8 +86,9 @@ fun AppNavigation() {
             MainScreen(
                 userName = userName,
                 onLogout = {
-                    // Clear session when logging out
+                    // Clear session and reset repository state
                     SessionManager.clearSession(context)
+                    UserRepository.currentUserEmail.value = null
 
                     navController.navigate(RootRoutes.LOGIN) {
                         popUpTo(0) { inclusive = true }
