@@ -62,7 +62,7 @@ fun WellnessScreen() {
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     Scaffold(
-        topBar = { GetHealthTopBar(title = "Wellness Advisor") }
+        topBar = { GetHealthTopBar(title = "Wellness") }
     ) { innerPadding ->
         Column(
             modifier = Modifier
