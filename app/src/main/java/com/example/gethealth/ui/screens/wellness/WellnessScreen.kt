@@ -62,7 +62,7 @@ fun WellnessScreen() {
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     Scaffold(
-        topBar = { GetHealthTopBar(title = "Wellness") }
+        topBar = { GetHealthTopBar(title = "Wellness") },
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -238,7 +238,7 @@ fun MoodSelectionScreen(
                 }
             }
             Spacer(modifier = Modifier.height(24.dp))
-            WellnessTips(selectedMood, false)
+            WellnessTips(selectedMood, compact = false)
         }
 
         if (showDatePicker) {
@@ -248,8 +248,7 @@ fun MoodSelectionScreen(
                     WellbeingRepository.draftDateEpoch.longValue = it.toEpochDay()
                     showDatePicker = false
                 },
-                onDismiss = { showDatePicker = false }
-            )
+            ) { showDatePicker = false }
         }
 
         message?.let {
@@ -324,12 +323,14 @@ fun MoodDatePickerDialog(
     DatePickerDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            TextButton(onClick = {
-                datePickerState.selectedDateMillis?.let {
-                    val date = Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
-                    onDateSelected(date)
-                }
-            }) {
+            TextButton(
+                onClick = {
+                    datePickerState.selectedDateMillis?.let {
+                        val date = Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
+                        onDateSelected(date)
+                    }
+                },
+            ) {
                 Text("OK")
             }
         },
@@ -601,7 +602,7 @@ fun MoodHistoryScreen(userEmail: String) {
         val noteMatches = entry.note?.contains(searchQuery, ignoreCase = true) ?: false
         val dateMatches = entry.date.contains(searchQuery, ignoreCase = true)
         val matchesSearch = noteMatches || dateMatches
-        val matchesMood = selectedMoodFilter == null || entry.mood == selectedMoodFilter
+        val matchesMood = selectedMoodFilter == null || (entry.mood == selectedMoodFilter)
         matchesSearch && matchesMood
     }
 

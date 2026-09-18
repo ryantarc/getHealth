@@ -30,6 +30,7 @@ import com.example.gethealth.model.User
 import com.example.gethealth.data.UserRepository
 import com.example.gethealth.ui.components.GetHealthButton
 import com.example.gethealth.ui.components.GetHealthTextField
+import com.example.gethealth.ui.util.isValidEmail
 
 /**
  * The Register screen.
@@ -56,7 +57,7 @@ fun RegisterScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Column(
             modifier = Modifier
@@ -119,8 +120,14 @@ fun RegisterScreen(
                     name.isBlank() || email.isBlank() || password.isBlank() -> {
                         "Please fill in all fields."
                     }
+                    !isValidEmail(email) -> {
+                        "Please enter a valid @gmail.com address."
+                    }
                     password != confirmPassword -> {
                         "Passwords do not match."
+                    }
+                    password.length < 6 -> {
+                        "Password must be at least 6 characters long."
                     }
                     else -> null
                 }
