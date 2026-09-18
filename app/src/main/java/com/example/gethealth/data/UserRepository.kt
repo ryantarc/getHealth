@@ -46,9 +46,23 @@ object UserRepository {
 
     /**
      * Registers a new user by inserting a row into the 'Users' table.
+     * Throws an exception if the email is already registered.
      */
     suspend fun register(name: String, email: String, password: String): User {
-        // We use a map to avoid sending a null 'id' to an auto-incrementing column
+        // Step 1: Check if a user with this email already exists
+        val existingUser = SupabaseClient.client.from("Users")
+            .select(columns = Columns.ALL) {
+                filter {
+                    eq("email", email)
+                }
+            }
+            .decodeSingleOrNull<User>()
+
+        if (existingUser != null) {
+            throw Exception("This email is already registered. Please login instead.")
+        }
+
+        // Step 2: Proceed with registration if email is unique
         val data = mapOf(
             "name" to name,
             "email" to email,

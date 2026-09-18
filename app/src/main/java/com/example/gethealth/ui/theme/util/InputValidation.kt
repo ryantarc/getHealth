@@ -1,5 +1,7 @@
 package com.example.gethealth.ui.util
 
+import android.util.Patterns
+
 /**
  * Utility functions for validating user input.
  */
@@ -18,4 +20,13 @@ fun looksLikeValidInput(text: String): Boolean {
     // This filters out things like "123456" or "!!!"
     val letterCount = trimmed.count { it.isLetter() }
     return letterCount >= trimmed.length / 2
+}
+
+/**
+ * Checks if a string is a valid email format and specifically ends with @gmail.com.
+ */
+fun isValidEmail(email: String): Boolean {
+    return email.isNotBlank() && 
+           Patterns.EMAIL_ADDRESS.matcher(email).matches() && 
+           email.lowercase().endsWith("@gmail.com")
 }
